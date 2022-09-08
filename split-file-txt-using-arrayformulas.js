@@ -1,17 +1,26 @@
+/*
+https://spreadsheet.dev/
+*/
+
 const myApp = SpreadsheetApp.getActiveSpreadsheet();
 const mySheetMain = myApp.getSheetByName("PAINEL");
 const mySheetDados = myApp.getSheetByName("DADOS");
-const mySheetWork = myApp.getSheetByName("TEST");
-const myFileName = mySheetMain.getRange('B6').getValue();
+const mySheetWork = myApp.getSheetByName("PROCESSADOR");
 
+const myFileName = mySheetMain.getRange('B7').getValue();
 const myFolder = DriveApp.getFolderById('1qE66odB0YyUkUouMW_gcRj7PaQ9jiMqt');
 
-//DEFINE LOOP DA BUSCA PELO ARQUIVO NO DRIVE
+let xk_col_fonte_de_dados = mySheetWork.getRange("A2").getValue();
+
+//const lastRowSheetWork = mySheetWork.getLastRow() +1;
+//const lastRowSheetDados = mySheetDados.getLastRow() +1;
+
+//BUSCA ARQUIVO NO DRIVE PARA IMPORTAR
 //const myFile = DriveApp.getFilesByName(myFileName).next().getBlob().getDataAsString();
 
 function onOpen(e) {
   SpreadsheetApp.getUi()
-    .createMenu('PROCESADOR')
+    .createMenu('⚙️ PROCESADOR')
     .addItem('LIMPAR', 'clearSheets')
     .addItem('EXECUTAR', 'executeScript')
     .addToUi();
@@ -21,20 +30,28 @@ function onOpen(e) {
 
 function executeScript() {
   
-  resetFilter();
+    if(xk_col_fonte_de_dados != "")
+    {
+      resetFilter();
 
-  //clearSheets();
+      //clearSheets();
 
-  importFile();
+      importFile();
 
-  splitFileTxt();
+      splitFileTxt();
 
-  copiarParaDados();
+      copiarParaAbaDados();
 
-  mySheetWork.getActiveRangeList().clear({contentsOnly: true, skipFilteredRows: true});
+      mySheetWork.getActiveRangeList().clear({contentsOnly: true, skipFilteredRows: true});
 
-  //IMPORT
-  SpreadsheetApp.getUi().alert('Arquivo processado com sucesso!'); //exibe msg alert
+      SpreadsheetApp.flush();
+    }
+    else
+    {
+      SpreadsheetApp.getUi().alert("Ops!", 'Aba PROCESSADOR sem dados. \n\n Veja orientações na aba PAINEL.', SpreadsheetApp.getUi().ButtonSet.OK); //msg alert
+      SpreadsheetApp.flush();
+    }
+
 }
 
 function resetFilter() {
@@ -48,31 +65,41 @@ function resetFilter() {
 }
 
 function clearSheets(){
+  
   resetFilter();
 
   mySheetWork.getActiveRangeList().clear({contentsOnly: true, skipFilteredRows: true});
+  
+  SpreadsheetApp.flush();
+ 
   mySheetWork.getRange('A1').setValue('Fonte de Dados 👇');
   mySheetWork.getRange('A2').activate();
-  SpreadsheetApp.getUi().alert('Ok! Base limpa. Retornar ao PAINEL e continuar.'); //exibe msg alert
+
+  SpreadsheetApp.getUi().alert("Ok!", 'Base limpa. \n\n Retorne à aba PAINEL. \n\n Selecione Mês e Ano. \n\n Siga as orientações.', SpreadsheetApp.getUi().ButtonSet.OK); //msg alert
+  
+  SpreadsheetApp.flush();
 
   mySheetWork.getRange('A2').activate();
-  mySheetMain.getRange('A2').activate();
+
+  mySheetMain.getRange('C4').activate();
+  
+  SpreadsheetApp.flush();
 }
 
 function importFile(){
-
  //EM DESENVOLVIMENTO
 
+  SpreadsheetApp.flush();
 }
 
 function splitFileTxt() {
   //extrai data, primeira coluna do arquivo
   mySheetWork.getRange('B1').setValue('Referência');
   //mySheetWork.getRange('B2').setFormula('=ARRAYFORMULA(IF(ISBLANK($A$2:$A);""; ARRAYFORMULA(TRIM(MID($A$2:$A; LAYOUT!B2; LAYOUT!D2)))))'); // OLD COMAND
-  //mySheetWork.getRange('B2').setFormula('=ARRAYFORMULA(IF(ISBLANK($A$2:$A);""; ARRAYFORMULA( TRIM( MID( $A$2:$A; (LAYOUT!B2+6); LAYOUT!D2 ) ) & "/" & TRIM( MID($A$2:$A; (LAYOUT!B2+4); (LAYOUT!D2-6) ) ) & "/" & TRIM(MID($A$2:$A; LAYOUT!B2; (LAYOUT!D2-4) )))))');
+  //mySheetWork.getRange('B2').setFormula('=ARRAYFORMULA(IF(ISBLANK($A$2:$A);""; ARRAYFORMULA( TRIM(IF(B2>1;"01")MID($A$2:$A; (LAYOUT!B2+6); LAYOUT!D2 ) ) & "/" & TRIM( MID($A$2:$A; (LAYOUT!B2+4); (LAYOUT!D2-6) ) ) & "/" & TRIM(MID($A$2:$A; LAYOUT!B2; (LAYOUT!D2-4) )))))');
 
   //DEV CONVERT PARA 1º DIA DO MÊS
-  mySheetWork.getRange('B2').setFormula('=ARRAYFORMULA(IF(ISBLANK($A$2:$A);""; ARRAYFORMULA( TRIM( MID( $A$2:$A; (LAYOUT!B2+6); LAYOUT!D2 ) ) & "/" & TRIM( MID($A$2:$A; (LAYOUT!B2+4); (LAYOUT!D2-6) ) ) & "/" & TRIM(MID($A$2:$A; LAYOUT!B2; (LAYOUT!D2-4) )))))');
+  mySheetWork.getRange('B2').setFormula('=ARRAYFORMULA(IF(ISBLANK($A$2:$A);""; ARRAYFORMULA( TRIM( IF( MID( $A$2:$A; (LAYOUT!B2+6); LAYOUT!D2 ) >1; "01"; MID( $A$2:$A; (LAYOUT!B2+6); LAYOUT!D2 ) ) ) & "/" & TRIM( MID($A$2:$A; (LAYOUT!B2+4); (LAYOUT!D2-6) ) ) & "/" & TRIM(MID($A$2:$A; LAYOUT!B2; (LAYOUT!D2-4) )))))');
 
   //extrai unidade consumidora
   mySheetWork.getRange('C1').setValue('Unidade Consumidora');
@@ -112,70 +139,77 @@ function splitFileTxt() {
 
  //extrai 
   mySheetWork.getRange('L1').setValue('Grupo Tarifário');
-  //mySheetWork.getRange('L2').setFormula('=ARRAYFORMULA(IF(ISBLANK($A$2:$A);""; ARRAYFORMULA(TRIM(MID($A$2:$A; LAYOUT!B12; LAYOUT!D12)))))'); //OLD
   mySheetWork.getRange('L2').setFormula('=ARRAYFORMULA(IF(ISBLANK($A$2:$A);""; ARRAYFORMULA(IF(TRIM(MID($A$2:$A; LAYOUT!B12; LAYOUT!D12)) = "4a"; "B4a"; TRIM(MID($A$2:$A; LAYOUT!B12; LAYOUT!D12))))))');
+
+  mySheetWork.getRange('Z1').setValue('=CONCATENATE("Duplicadas" & CHAR(10) & SUM(L2:L))');
+  mySheetWork.getRange('Z2').setFormula('=ARRAYFORMULA(IF(ISBLANK(B2:B);""; COUNTIFS(DADOS!A2:A; B2:B; DADOS!B2:B; C2:C)))');
 
  //busca na aba Localidades 
   //mySheetWork.getRange('M1').setValue('Sigla');
   //mySheetWork.getRange('M2').setFormula('=QUERY(LocalidadesPMJ!$A$2:$Z; "SELECT K, L WHERE A like '%"&C2&"%' "; 0)');
 
- //mySheetWork.getRange('N1').setValue('Secretaria');
-
-
-
-  mySheetWork.getRange('A1').activate();
-  var ultimaLinha = mySheetWork.getLastRow();
-
-  mySheetWork.getRange('A1').activate();
-
-};
-
-function setFormulasToValues() {
-  var range = mySheetWork.getRange('A:Z').activate();
-  range.copyValuesToRange(mySheetWork, 1, range.getLastColumn(), 1, range.getLastRow());
-};
-
-function copiarParaDados() {
-  var spreadsheet = SpreadsheetApp.getActive();
-  spreadsheet.getRange('A1:C1').activate();
-  spreadsheet.setActiveSheet(spreadsheet.getSheetByName('TEST'), true);
-  spreadsheet.getRange('B2').activate();
-  var currentCell = spreadsheet.getCurrentCell();
-  spreadsheet.getSelection().getNextDataRange(SpreadsheetApp.Direction.NEXT).activate();
-  currentCell.activateAsCurrentCell();
-  currentCell = spreadsheet.getCurrentCell();
-  spreadsheet.getSelection().getNextDataRange(SpreadsheetApp.Direction.DOWN).activate();
-  currentCell.activateAsCurrentCell();
-  spreadsheet.setActiveSheet(spreadsheet.getSheetByName('DADOS'), true);
-  spreadsheet.getRange('A1').activate();
-  spreadsheet.getCurrentCell().getNextDataCell(SpreadsheetApp.Direction.DOWN).activate();
-  spreadsheet.getRange('A2').activate();
-  spreadsheet.getRange('TEST!B2:L600').copyTo(spreadsheet.getActiveRange(), SpreadsheetApp.CopyPasteType.PASTE_VALUES, false);
-  spreadsheet.getRange('A1').activate();
-  spreadsheet.setActiveSheet(spreadsheet.getSheetByName('PAINEL'), true);
+  SpreadsheetApp.flush();
 };
 
 
+function sumColumn() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var s1 = ss.getSheetByName("PROCESSADOR");
+  var dataRange = s1.getDataRange();
+  var lastrow = dataRange.getLastRow();
+  var values = s1.getRange(1, 26, lastrow, 1).getValues();
+  var result = 0;
+  for (var i = 0; i < values.length; i++) {
+    result += typeof values[i][0] == 'number' ? values[i][0] : 0;
+    //Logger.log(result);
+  }
+  //s1.getRange(i + 1, 26).setValue(result);
+}
 
-function DEV_copiarParaDados() {
 
-  mySheetWork.getRange('B2').activate();
-  var currentCell = mySheetWork.getCurrentCell();
+//COPIAR PARA DA ABA PROCESSADOR PARA ABA DADOS
+function copiarParaAbaDados(){
 
-  mySheetWork.getSelection().getNextDataRange(SpreadsheetApp.Direction.NEXT).activate();
-  currentCell.activateAsCurrentCell();
-  currentCell = mySheetWork.getCurrentCell();
-  mySheetWork.getSelection().getNextDataRange(SpreadsheetApp.Direction.DOWN).activate();
-  currentCell.activateAsCurrentCell();
+  if( sumColumn() < 1 ) 
+  {
+      let lastRowSheetWork = mySheetWork.getLastRow();
 
-  mySheetDados.getRange('A1').activate();
-  mySheetDados.getCurrentCell().getNextDataCell(SpreadsheetApp.Direction.DOWN).activate();
+      let validacao = mySheetDados.getRange("A1").getValue();
 
-  mySheetDados.getRange('A' + mySheetDados.getLastRow() + 1).activate();
+      if(validacao == ""){
 
-  mySheetDados.getRange('A' + mySheetDados.getLastRow() + 1).copyTo(mySheetDados.getActiveRange(), SpreadsheetApp.CopyPasteType.PASTE_VALUES, false);
-  
-  mySheetDados.getRange('A1').activate();
+        var rowInicio = 1;
+        var lastRow = 1;
 
-  mySheetMain.getRange('A1').activate();
-};
+      }else{
+
+        var rowInicio = 2;
+        var lastRow = mySheetDados.getLastRow() + 1;
+
+      }
+      
+      mySheetDados.insertRowsAfter(mySheetDados.getMaxRows(), lastRowSheetWork -1);
+
+      let area = mySheetWork.getRange( "B2" +  ":L" + lastRowSheetWork ).getValues();
+
+      mySheetDados.getRange("A" + lastRow + ":K" + (lastRow + area.length - 1)).setValues(area);
+
+      mySheetDados.getRange("A1").activate();
+
+      SpreadsheetApp.getUi().alert('Ok! \n\n Arquivo processado com sucesso!'); //exibe msg alert
+
+      SpreadsheetApp.flush();
+  }
+  else
+  {
+    SpreadsheetApp.getUi().alert('Ops!', 'Duplicidade detectada! \n\n Os registros do arquivo processado já encontram-se na base de dados. \n\n Veja orientações na aba PAINEL. \n\n Dúvidas: entrar em contato com SAP.UAO', SpreadsheetApp.getUi().ButtonSet.OK); //msg alert
+
+     SpreadsheetApp.flush();
+  }
+
+}
+
+//COPIAR PARA OUTRA PLANILHA
+//const ssId = "1UqnWpZgf1DhkuNe-LxeFpzFhTs7o2oUCoqIyF8Wutnw"
+//const ssBase = SpreadsheetApp.openById(ssId);
+//const sheetBase = ssBase.getSheetByName("BASE");
