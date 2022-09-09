@@ -8,10 +8,6 @@ const abaMenuDep = shApp.getSheetByName("Menu_Dependente");
 
 const abaHistorico = shApp.getSheetByName('HISTORICO');
 
-const arquivo = abaMain.getRange('B7').getValue();
-//const pasta = DriveApp.getFolderById('1qE66odB0YyUkUouMW_gcRj7PaQ9jiMqt'); // OFICIAL
-const pasta = DriveApp.getFolderById('1joIDUK87MC5coulc75wS6rDfoEXjK1o2'); // DEV
-
 //GET DADOS DO USUÁRIO
 const email_user = Session.getActiveUser().getEmail();
 
@@ -97,8 +93,8 @@ function clearSheets(){
 function importFile() {
 
   var arquivo = abaMain.getRange('B7').getValue();
-  //var pasta = DriveApp.getFolderById('1qE66odB0YyUkUouMW_gcRj7PaQ9jiMqt'); // OFICIAL
-  var pasta = DriveApp.getFolderById('1joIDUK87MC5coulc75wS6rDfoEXjK1o2'); // DEV
+  var pasta = DriveApp.getFolderById('1qE66odB0YyUkUouMW_gcRj7PaQ9jiMqt'); // OFICIAL
+  //var pasta = DriveApp.getFolderById('1joIDUK87MC5coulc75wS6rDfoEXjK1o2'); // DEV
 
   shApp.setActiveSheet(abaWork);
 
