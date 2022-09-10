@@ -1,3 +1,5 @@
+const ui = SpreadsheetApp.getUi();
+
 function menuItem1() {
   ui.alert('⚠️ Title Alert 1!', 'You clicked the first menu item!', ui.ButtonSet.OK);
 }
